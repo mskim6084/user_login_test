@@ -26,6 +26,7 @@ app.get('/register', (req,res) => {
 })
 
 app.post('/register', async (req,res) => {
+    console.log(req.body.email)
     try{
         // Creating a user and inserting it into the database
         //Grabbing values from user
@@ -103,6 +104,14 @@ app.post('/register', async (req,res) => {
                         }
                     )
                 }
+                else{
+                    console.log("Invalid email!")
+                    res.render('register',{
+                        first_name: firstname,
+                        last_name:lastname,
+                        email:email
+                    })
+                }
             }
             // If the passwords don't match render out register page again with given values
             else {
@@ -119,6 +128,7 @@ app.post('/register', async (req,res) => {
         res.status(500).send("Uh-oh")
         console.error(err.message)
     }
+    
 })
 
 app.listen(3000, () => {
