@@ -24,11 +24,12 @@ function handleForm(e){
         if (password === confirm_password){
             // If the password is strong enough then submit the form and send it to the server.
             if(validator.isStrongPassword(password)){
+                // Submit the form.
                 document.getElementById('register_form').submit();
             }
             else {
                 // different types of alerts cant be made
-                alert('Password is not strong enough')
+                alert('Password is not strong enough.')
             }
         }
         else {
