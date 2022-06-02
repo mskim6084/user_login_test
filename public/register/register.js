@@ -9,10 +9,10 @@ function handleForm(e){
     var last_name = document.getElementById('last_name').value
     var email = document.getElementById('email').value
     var password = document.getElementById('password').value
-    var confirm_password = document.getElementById('confirm_p').value
+    var confirm_password = document.getElementById('confirmPassword').value
 
     //Check if there are any empty fields
-    if(!first_name || !last_name || !email || !password || !confirm_password){
+    if(!validator.isEmpty(first_name) || !validator.isEmpty(last_name) || !validator.isEmpty(email) || !validator.isEmpty(password) || !validator.isEmpty(confirm_password)){
         alert("All fields must be filled.")
     }
     
@@ -39,4 +39,5 @@ function handleForm(e){
     else{
         alert("Please enter a valid email")
     }
+    
 }
