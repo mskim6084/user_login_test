@@ -3,17 +3,34 @@ const app = express();
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const alert = require('alert');
-const emailValidator = require('email-validator')
+const emailValidator = require('email-validator');
 const zxcvbn = require('zxcvbn');
-const bodyParser = require('body-parser')
-const {check,validationResult} = require('express-validator')
+const bodyParser = require('body-parser');
+const {check,validationResult} = require('express-validator');
+const session = require('express-session');
+const flash = require('express-flash');
+const passport = require('passport')
 
+
+const initializePassport = require('./passportConfig')
 const db_pool = require('./database');
 const { jsonp } = require("express/lib/response");
+
+initializePassport(passport)
+
 
 app.set('view engine','ejs')
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: false}))
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized:false
+}))
+app.use(flash())
+app.use(passport.initialize())
+app.use(passport.session())
+
 
 const urlencodedParser = bodyParser.urlencoded({extended: false})
 
@@ -29,12 +46,15 @@ app.get('/register', (req,res) => {
     })
 })
 
+app.get('/dashboard', (req,res) => {
+    res.render('dashboard')
+})
+
 app.post('/register',urlencodedParser,[
     check('email', 'Email is not valid').isEmail().normalizeEmail(),
     check('password','Password is not strong enough').isStrongPassword(),
     check('confirmPassword').custom((value, {req})=>{
         if(value !== req.body.password){
-            console.log("This ran")
             throw new Error("Password confirmation does not match password")
         }
         else {
@@ -43,18 +63,8 @@ app.post('/register',urlencodedParser,[
     }),
     check('firstname').isEmpty().trim().escape(),
     check('lastname').isEmpty().trim().escape()
-    
-    
 ] ,async (req,res) => {
     // Creating a user and inserting it into the database
-    //Grabbing values from user
-    const firstname = req.body.first_name
-    const lastname = req.body.last_name
-    const email = req.body.email
-    const password = req.body.password
-    const confirm_password = req.body.confirm_p
-    const hashedPassword =  await bcrypt.hash(password, 10)
-
     const errors = validationResult(req)
     if(!errors.isEmpty()){
         const alert = errors.array()
@@ -67,6 +77,14 @@ app.post('/register',urlencodedParser,[
         })
     }
     else {
+        //Grabbing values from user
+        const firstname = req.body.first_name
+        const lastname = req.body.last_name
+        const email = req.body.email
+        const password = req.body.password
+        const confirm_password = req.body.confirm_p
+        const hashedPassword =  await bcrypt.hash(password, 10)
+
         // Creating cid and cpid for the database
         const cid = uuidv4();
         const cpid = uuidv4();
@@ -82,7 +100,7 @@ app.post('/register',urlencodedParser,[
                 // If there is an error we just
                 if (err){
                     console.log(err.message)
-                    alert("Something went wrong while trying to create an email")
+                    alert("Something went wrong while trying to create an account")
                     res.render('register',{
                         first_name: firstname,
                         last_name:lastname,
@@ -93,7 +111,7 @@ app.post('/register',urlencodedParser,[
                 if(result.rows[0].count > 0){
                     console.log("EMAIL ALREADY EXISTS")
                     alert('User with that email already exists')
-                    res.render('register',{
+                    res.render('register',{ 
                         first_name: firstname,
                         last_name:lastname,
                         email:email
@@ -129,6 +147,12 @@ app.post('/register',urlencodedParser,[
     }
 
 })
+
+app.post('/', passport.authenticate('local', {
+    successRedirect: '/dashboard',
+    failureRedirect: '/',
+    failureFlash: true
+}))
 
 app.listen(3000, () => {
     console.log('http://localhost:3000')
