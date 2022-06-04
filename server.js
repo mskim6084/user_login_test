@@ -1,3 +1,4 @@
+// Setting up dependencies
 const express = require("express");
 const app = express();
 const bcrypt = require('bcrypt');
@@ -10,15 +11,18 @@ const {check,validationResult} = require('express-validator');
 const session = require('express-session');
 const flash = require('express-flash');
 const passport = require('passport')
+const methodOverride = require('method-override')
 
-
+// Other import files from 
 const initializePassport = require('./passportConfig')
 const db_pool = require('./database');
 const { jsonp } = require("express/lib/response");
+const { Pool } = require("pg");
 
+// Initializing the passport for client sessions
 initializePassport(passport)
 
-
+// Middleware for Express
 app.set('view engine','ejs')
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: false}))
@@ -27,18 +31,20 @@ app.use(session({
     resave: false,
     saveUninitialized:false
 }))
+app.use(methodOverride('_method'))
 app.use(flash())
 app.use(passport.initialize())
 app.use(passport.session())
 
-
+// Body parser for when client side inputs comes in
 const urlencodedParser = bodyParser.urlencoded({extended: false})
 
-app.get('/', (req,res) => {
+// GET, POST, DELETE functions
+app.get('/',checkNotAuthenticated,(req,res) => {
     res.render('homepage')
 })
 
-app.get('/register', (req,res) => {
+app.get('/register', checkNotAuthenticated,(req,res) => {
     res.render('register', {
         first_name:"",
         last_name:"",
@@ -46,11 +52,35 @@ app.get('/register', (req,res) => {
     })
 })
 
-app.get('/dashboard', (req,res) => {
-    res.render('dashboard')
+app.get('/dashboard', checkAuthenticated, (req,res) => {
+   db_pool.query(
+       'SELECT * FROM client_profile WHERE cid = $1', [req.user.cid],
+       (err,result) => {
+           if (err) {throw err}
+           if (result.rows.length > 0){
+               res.render('dashboard', {
+                   user:result.rows[0].first_name
+               })
+           }
+           else{
+               //Flash the message onto the page
+           }
+       }
+   )
+
 })
 
-app.post('/register',urlencodedParser,[
+// Logging the user out and deleting the session
+app.delete('/logout', (req,res) => {
+    req.logOut(function(err){
+        if (err){
+            return next(err)
+        }
+        res.redirect('/')
+    });
+})
+
+app.post('/register',checkNotAuthenticated,urlencodedParser,[
     check('email', 'Email is not valid').isEmail().normalizeEmail(),
     check('password','Password is not strong enough').isStrongPassword(),
     check('confirmPassword').custom((value, {req})=>{
@@ -148,11 +178,29 @@ app.post('/register',urlencodedParser,[
 
 })
 
+//Logging user in.
 app.post('/', passport.authenticate('local', {
     successRedirect: '/dashboard',
     failureRedirect: '/',
     failureFlash: true
 }))
+
+// Checks to see if the user is already authenticated
+function checkAuthenticated(req,res,next) {
+    if (req.isAuthenticated()){
+        return next()
+    }
+    
+    res.redirect('/')
+}
+
+// Checks to see if the user is NOT authenticated
+function checkNotAuthenticated(req,res,next){
+    if (req.isAuthenticated()){
+        return res.redirect('/dashboard')
+    }
+    next()
+}
 
 app.listen(3000, () => {
     console.log('http://localhost:3000')

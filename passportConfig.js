@@ -11,16 +11,14 @@ function initialize(passport){
                 if(err){
                     throw err
                 }
-                console.log(result)
                 if (result.rows.length > 0){
                     const user = result.rows[0];
-
                     bcrypt.compare(password, user.password, (err,isMatch)=> {
                         if (err){
                             throw err;
                         }
                         if (isMatch){
-                            return done(null, user);
+                            return done(null, user)
                         }
                         else {
                             return done(null, false, {message: "Password is not correct"})

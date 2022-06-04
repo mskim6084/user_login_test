@@ -1,2 +1,4 @@
-Hi <br>
-<button>Log out</button>
+Hi  <%=user.charAt(0).toUpperCase() + user.slice(1)%><br>
+<form action="/logout?_method=DELETE" method="POST">
+    <button type="submit">Log Out</button>
+</form>
