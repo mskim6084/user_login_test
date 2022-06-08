@@ -3,7 +3,7 @@ const zxcvbn = require('zxcvbn')
 
 function handleForm(e){
     e.preventDefault()
-    
+    //I dunno
     // Grab the data from the form
     var first_name = document.getElementById('first_name').value
     var last_name = document.getElementById('last_name').value
