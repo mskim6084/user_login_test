@@ -1,4 +1,7 @@
-require("dotenv").config()
+if (process.env.NODE_ENV !== "production") {
+    require("dotenv").config()
+}
+
 const db = require('pg').Pool
 
 const db_pool = new db({
