@@ -14,12 +14,9 @@ const db_pool = new db({
     database: process.env.DB_DATABASE,
     ssl: {
         rejectUnauthorized:false,
-        ca: fs.readFileSync('./us-east-2-bundle.pem').toString(),
-        key: fs.readFileSync('./us-east-2-bundle.pem').toString(),
-        cert: fs.readFileSync('./us-east-2-bundle.pem').toString()
-    },
+        ca: process.env.SSL_CA
+    }
 });
-
 
 
 module.exports = db_pool;
