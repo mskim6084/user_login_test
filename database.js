@@ -15,8 +15,6 @@ const db_pool = new db({
     ssl: {
         rejectUnauthorized:false,
         ca: process.env.SSL_CA,
-        key: process.env.SSL_CA,
-        cert: process.env.SSL_CA
     }
 });
 
